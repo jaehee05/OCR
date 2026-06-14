@@ -3,6 +3,9 @@
   "functions": {
     "api/grade.ts": {
       "maxDuration": 60
+    },
+    "api/ocr.ts": {
+      "maxDuration": 60
     }
   }
 }
