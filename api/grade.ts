@@ -125,7 +125,7 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: '문제와 답안 이미지가 필요합니다.' }, 400);
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: 50000, maxRetries: 0 });
 
   const questionsText = body.questions
     .map(
@@ -138,7 +138,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const result = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4096,
       system: [
         {
