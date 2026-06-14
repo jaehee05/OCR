@@ -99,10 +99,13 @@ export default async function handler(req: Request): Promise<Response> {
     ? `다음은 참고용 힌트입니다(지문/문제 등). 이걸 보고 학생의 손글씨를 추론할 때 단서로 사용하세요.\n\n${body.hint}\n\n위 사진의 학생 손글씨를 모두 인식해주세요.`
     : '학생이 노트에 손으로 쓴 답안 사진입니다. 전체 텍스트를 인식해주세요.';
 
+  const t0 = Date.now();
+  console.log('[ocr] start, imageBase64 length:', body.imageBase64.length);
+
   try {
     const result = await client.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 4096,
+      max_tokens: 2048,
       system: [
         {
           type: 'text',
@@ -130,6 +133,7 @@ export default async function handler(req: Request): Promise<Response> {
       ],
     });
 
+    console.log('[ocr] anthropic OK in', Date.now() - t0, 'ms, usage:', result.usage);
     const toolUse = result.content.find((b) => b.type === 'tool_use');
     if (!toolUse || toolUse.type !== 'tool_use') {
       return json({ error: 'OCR 결과 파싱 실패' }, 500);
@@ -138,7 +142,9 @@ export default async function handler(req: Request): Promise<Response> {
     return json(toolUse.input as OcrResponse);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: 'Claude API 호출 실패', detail: message }, 500);
+    const status = (err as { status?: number })?.status;
+    console.error('[ocr] anthropic FAIL after', Date.now() - t0, 'ms, status:', status, 'message:', message);
+    return json({ error: 'Claude API 호출 실패', detail: message, status }, 500);
   }
 }
 
