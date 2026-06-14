@@ -21,3 +21,9 @@ export type GradeResponse = {
   total_max: number;
   overall_feedback: string;
 };
+
+export type OcrResponse = {
+  raw_text: string;
+  overall_confidence: 'high' | 'medium' | 'low';
+  notes: string;
+};

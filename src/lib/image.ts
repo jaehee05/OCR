@@ -3,8 +3,8 @@ export type ImagePayload = {
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp';
 };
 
-const MAX_DIMENSION = 1600;
-const JPEG_QUALITY = 0.85;
+const MAX_DIMENSION = 2000;
+const JPEG_QUALITY = 0.92;
 
 export async function fileToCompressedImage(file: File): Promise<ImagePayload> {
   const dataUrl = await readAsDataUrl(file);
