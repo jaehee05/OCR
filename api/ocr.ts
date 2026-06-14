@@ -101,7 +101,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const result = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5',
       max_tokens: 4096,
       system: [
         {

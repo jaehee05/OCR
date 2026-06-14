@@ -209,7 +209,7 @@ export default function App() {
       </section>
 
       <footer className="mt-12 pb-4 text-center text-xs text-slate-400">
-        Powered by Claude Sonnet 4.6 Vision
+        Powered by Claude Haiku 4.5 Vision
       </footer>
     </div>
   );
