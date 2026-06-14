@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const config = {
   maxDuration: 60,
@@ -72,25 +73,19 @@ const OCR_TOOL = {
   },
 };
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return json({ error: 'ANTHROPIC_API_KEY not configured' }, 500);
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
   }
 
-  let body: OcrRequest;
-  try {
-    body = (await req.json()) as OcrRequest;
-  } catch {
-    return json({ error: 'Invalid JSON' }, 400);
-  }
-
-  if (!body.imageBase64) {
-    return json({ error: '이미지가 필요합니다.' }, 400);
+  const body = req.body as OcrRequest;
+  if (!body?.imageBase64) {
+    return res.status(400).json({ error: '이미지가 필요합니다.' });
   }
 
   const client = new Anthropic({ apiKey, timeout: 50000, maxRetries: 0 });
@@ -133,24 +128,16 @@ export default async function handler(req: Request): Promise<Response> {
       ],
     });
 
-    console.log('[ocr] anthropic OK in', Date.now() - t0, 'ms, usage:', result.usage);
+    console.log('[ocr] OK in', Date.now() - t0, 'ms, usage:', result.usage);
     const toolUse = result.content.find((b) => b.type === 'tool_use');
     if (!toolUse || toolUse.type !== 'tool_use') {
-      return json({ error: 'OCR 결과 파싱 실패' }, 500);
+      return res.status(500).json({ error: 'OCR 결과 파싱 실패' });
     }
-
-    return json(toolUse.input as OcrResponse);
+    return res.status(200).json(toolUse.input as OcrResponse);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const status = (err as { status?: number })?.status;
-    console.error('[ocr] anthropic FAIL after', Date.now() - t0, 'ms, status:', status, 'message:', message);
-    return json({ error: 'Claude API 호출 실패', detail: message, status }, 500);
+    console.error('[ocr] FAIL after', Date.now() - t0, 'ms, status:', status, 'message:', message);
+    return res.status(500).json({ error: 'Claude API 호출 실패', detail: message, status });
   }
-}
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
 }
